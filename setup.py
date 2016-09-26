@@ -12,13 +12,13 @@ try:
 except ImportError:
     from distutils.core import setup
 
-VERSION = '1.0.1'
+VERSION = '1.1.0'
 
 setup(
     name='salesforce_bulk_api',
     version=VERSION,
     author='Chris Guidry',
-    author_email='cguidry@safaribooksonline.com',
+    author_email='cguidry@oreilly.com',
     url='https://github.com/safarijv/salesforce-bulk-api',
     py_modules=['salesforce_bulk_api'],
     description='A Python 2 and 3 interface to the Salesforce Bulk API.',
