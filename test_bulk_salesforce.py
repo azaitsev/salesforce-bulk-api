@@ -172,21 +172,31 @@ def test_bulk_response_attributes():
 
 
 @pytest.yield_fixture()
-def salesforce_session():
+def salesforce_session(salesforce_instance):
     """Prepares a mock Salesforce session for the test suite"""
     with mock.patch('salesforce_bulk_api.salesforce_session') as salesforce_session:
-        salesforce_session.return_value.session_id = 'the-session-id'
-        salesforce_session.return_value.sf_version = '34.0'
-        salesforce_session.return_value.base_url = 'https://salesforce/services/data/v34.0/'
+        salesforce_session.return_value = salesforce_instance
 
-        salesforce_session.return_value.describe.return_value = {
+        yield salesforce_session
+
+
+@pytest.yield_fixture()
+def salesforce_instance():
+    """Prepares a mock for Salesforce instance"""
+    with mock.patch('salesforce_bulk_api.Salesforce') as Salesforce:
+        Salesforce.return_value.session_id = 'the-session-id'
+        Salesforce.return_value.sf_version = '34.0'
+        Salesforce.return_value.base_url = 'https://salesforce/services/data/v34.0/'
+
+        Salesforce.return_value.describe.return_value = {
             'sobjects': [
                 {'name': 'Lead'},
                 {'name': 'Contact'}
             ]
         }
 
-        yield salesforce_session
+        yield Salesforce()
+
 
 @pytest.yield_fixture()
 def bulk_request():
@@ -201,6 +211,11 @@ def new_job(salesforce_session):
     """Prepares a new job in its default state"""
     return SalesforceBulkJob('update', 'Lead')
 
+@pytest.fixture()
+def new_job_with_custom_salesforce(salesforce_instance):
+    """Prepares a new job, using custom salesforce instance"""
+    return SalesforceBulkJob('update', 'Lead', salesforce=salesforce_instance)
+
 def test_instantiating_salesforce_bulk_job(new_job, salesforce_session, bulk_request):
     """Instantiating a SalesforceBulkJob should authenticate and prepare for creating jobs"""
     assert new_job.session_id == 'the-session-id'
@@ -214,6 +229,16 @@ def test_instantiating_salesforce_bulk_job(new_job, salesforce_session, bulk_req
 
     assert salesforce_session.call_count == 1
     assert bulk_request.call_count == 0
+
+
+def test_instantiating_salesforce_bulk_job_with_custom_session(
+        new_job_with_custom_salesforce, salesforce_session):
+    """
+    Instantiating a SalesforceBulkJob providing custom simple-salesforce object,
+     salesforce_session function shouldn't be called
+    """
+    assert new_job_with_custom_salesforce.session_id == 'the-session-id'
+    assert salesforce_session.call_count == 0
 
 def test_instantiating_salesforce_bulk_job_validates_operation(salesforce_session, bulk_request):
     """Instantiating a SalesforceBulkJob should validate the requested operation"""
