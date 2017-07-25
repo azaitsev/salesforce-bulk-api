@@ -43,14 +43,15 @@ def salesforce_session():
 class SalesforceBulkJob:
     """A Python interface to the Salesforce Bulk API."""
 
-    PUBLISHING_BATCH_SIZE = 9999
     SUPPORTED_OPERATIONS = {'insert', 'update', 'delete', 'upsert'}
 
-    def __init__(self, operation, object_name, external_id_field=None, salesforce=None):
+    def __init__(self, operation, object_name, external_id_field=None, salesforce=None,
+                 batch_size=9999):
         """Creates a new API interface to Salesforce's bulk API, from which any
         number of jobs may be created.  The operation should be one of ('insert',
         'update', 'upsert', or 'delete'), and the object_name should be the
         proper-case name of a Salesforce object (like Lead or Contact)."""
+        self.PUBLISHING_BATCH_SIZE = batch_size
         if not salesforce:
             salesforce = salesforce_session()
         self.session_id = salesforce.session_id
